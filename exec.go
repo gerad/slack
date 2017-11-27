@@ -3,6 +3,7 @@ package slack
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 )
 
@@ -12,20 +13,13 @@ var (
 	ErrMissingToken = errors.New("Slack API token missing")
 )
 
-// Argsable allows Exec to take any args that fulfil the interface
-// of having an Args() function that returns map[string]string of
-// key -> value
-type Argsable interface {
-	Args() map[string]string
-}
-
 // Exec executes a slack rpc command using the default client
-func Exec(cmd string, args Argsable, v interface{}) error {
+func Exec(cmd string, args map[string]interface{}, v interface{}) error {
 	return DefaultClient.Exec(cmd, args, v)
 }
 
 // Exec executes a slack rpc command
-func (client *Client) Exec(cmd string, args Argsable, v interface{}) error {
+func (client *Client) Exec(cmd string, args map[string]interface{}, v interface{}) error {
 	if client.Token == "" {
 		return ErrMissingToken
 	}
@@ -46,11 +40,11 @@ func (client *Client) Exec(cmd string, args Argsable, v interface{}) error {
 }
 
 // params converts args to url.Values for subsequent encoding by Exec
-func (client *Client) params(args Argsable) url.Values {
+func (client *Client) params(args map[string]interface{}) url.Values {
 	params := url.Values{}
 	if args != nil {
-		for k, v := range args.Args() {
-			params.Add(k, v)
+		for k, v := range args {
+			params.Add(k, fmt.Sprintf("%s", v))
 		}
 	}
 	params.Add("token", client.Token)
